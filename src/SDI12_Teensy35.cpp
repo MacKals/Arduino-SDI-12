@@ -124,7 +124,7 @@ SDI-12.org, official site of the SDI-12 Support Group.
 /*=========== 0. Includes, Defines, & Variable Declarations =============
 */
 
-#include "SDI12.h"                   // Header file for this library
+#include "SDI12_Teensy35.h"                   // Header file for this library
 SDI12 *SDI12::_activeObject = NULL;  // Pointer to active SDI12 object
 
 #include "SDI12_boards.h"            // Include timer information
