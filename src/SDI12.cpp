@@ -127,7 +127,7 @@ SDI-12.org, official site of the SDI-12 Support Group.
 #include "SDI12.h"                   // Header file for this library
 SDI12 *SDI12::_activeObject = NULL;  // Pointer to active SDI12 object
 
-#include "SDI12_boards.h"            //  Include timer information
+#include "SDI12_boards.h"            // Include timer information
 SDI12Timer sdi12timer;               // Timer functions
 
 static const uint16_t bitWidth_micros = (uint16_t) 833;  // The size of a bit in microseconds
@@ -139,7 +139,6 @@ static const uint16_t marking_micros = (uint16_t) 8330;  // The required mark be
 
 static const uint8_t txBitWidth = TICKS_PER_BIT;
 static const uint8_t rxWindowWidth = RX_WINDOW_FUDGE;  // A fudge factor to make things work
-static const uint8_t bitsPerTick_Q10 = BITS_PER_TICK_Q10;
 static const uint8_t WAITING_FOR_START_BIT = 0xFF;  // 0b11111111
 
 static uint16_t prevBitTCNT;     // previous RX transition in micros
@@ -154,9 +153,20 @@ static uint16_t mul8x8to16(uint8_t x, uint8_t y)
 // static method for calculating the number of bit-times that have elapsed
 static uint16_t bitTimes( uint8_t dt )
 {
-  return mul8x8to16( dt + rxWindowWidth, bitsPerTick_Q10 ) >> 10;
+  return round((dt + rxWindowWidth)*(BITS_PER_TICK_Q10)) >> 10;
 } // bitTimes
 
+#if defined(__MK64FX512__)
+    static volatile uint32_t TCNTX = 0;
+
+    void ftm0_isr(void) {
+        //FTM0_CNT = 0x0000; //no need for count reset - happens on roll-over
+        if ((FTM0_SC & FTM_SC_TOF) != 0) { //test if timer overflow flag set
+            FTM0_SC &= ~FTM_SC_TOF; //clear timer overflow flag (~ = bitwise NOT)
+            TCNTX++; //increment overflow counter
+        }
+    }
+#endif
 
 /* =========== 1. Buffer Setup ============================================
 
@@ -280,41 +290,33 @@ int SDI12::read()
 }
 
 // 2.5 - these functions hide the stream equivalents to return a custom timeout value
-int SDI12::peekNextDigit(LookaheadMode lookahead, bool detectDecimal)
+int SDI12::peekNextDigit(bool detectDecimal)
 {
   int c;
   while (1) {
     c = timedPeek();
 
-    if( c < 0 ||
-        c == '-' ||
-        (c >= '0' && c <= '9') ||
-        (detectDecimal && c == '.')) return c;
-
-    switch( lookahead ){
-        case SKIP_NONE: return -1; // Fail code.
-        case SKIP_WHITESPACE:
-            switch( c ){
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n': break;
-                default: return -1; // Fail code.
-            }
-        case SKIP_ALL:
-            break;
+    if( c < 0 || c == '-' || (c >= '0' && c <= '9') || (detectDecimal && c == '.')) {
+        return c;
     }
-    read();  // discard non-numeric
+    switch(c) {
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n': break;
+        default: return -1; // Fail code.
+    }
+    read();
   }
 }
 
-long SDI12::parseInt(LookaheadMode lookahead, char ignore)
+long SDI12::parseInt(char ignore)
 {
   bool isNegative = false;
   long value = 0;
   int c;
 
-  c = peekNextDigit(lookahead, false);
+  c = peekNextDigit(false);
   // ignore non numeric leading characters
   if(c < 0)
     return TIMEOUT; // TIMEOUT returned if timeout
@@ -338,7 +340,7 @@ long SDI12::parseInt(LookaheadMode lookahead, char ignore)
 }
 
 // the same as parseInt but returns a floating point value
-float SDI12::parseFloat(LookaheadMode lookahead, char ignore)
+float SDI12::parseFloat(char ignore)
 {
   bool isNegative = false;
   bool isFraction = false;
@@ -346,7 +348,7 @@ float SDI12::parseFloat(LookaheadMode lookahead, char ignore)
   int c;
   float fraction = 1.0;
 
-  c = peekNextDigit(lookahead, true);
+  c = peekNextDigit(true);
     // ignore non numeric leading characters
   if(c < 0)
     return TIMEOUT; // TIMEOUT returned if timeout
@@ -616,6 +618,8 @@ void SDI12::setPinInterrupts(bool enable)
         }
         // We don't detach the function from the interrupt for AVR processors
     }
+  #elif defined(__MK64FX512__)
+    if (enable) attachInterrupt(digitalPinToInterrupt(_dataPin), handleInterrupt, CHANGE);  // Merely need to attach the interrupt function to the pin
   #endif
 }
 
@@ -709,10 +713,12 @@ void SDI12::wakeSensors() {
   // Universal interrupts can be on while the break and marking happen because
   // timings for break and from the recorder are not critical.
   // Interrupts on the pin are disabled for the entire transmitting state
+
+  // _ALL_ interrupts disabled to avoid conflict with delayMicroseconds()
   digitalWrite(_dataPin, HIGH);
   delayMicroseconds(lineBreak_micros);  // Required break of 12 milliseconds
   digitalWrite(_dataPin, LOW);
-  delayMicroseconds(marking_micros);  // Required marking of 8.33 milliseconds
+  delayMicroseconds(marking_micros);    // Required marking of 8.33 milliseconds
 }
 
 // 6.2 - this function writes a character out on the data line
@@ -720,9 +726,7 @@ void SDI12::writeChar(uint8_t outChar) {
   uint8_t currentTxBitNum = 0; // first bit is start bit
   uint8_t bitValue = 1; // start bit is HIGH (inverse parity...)
 
-  noInterrupts();  // _ALL_ interrupts disabled so timing can't be shifted
-
-  uint8_t t0 = TCNTX; // start time
+  uint32_t t0 = TCNTX; // start time
   digitalWrite(_dataPin, HIGH);  // immediately get going on the start bit
   // this gives us 833µs to calculate parity and position of last high bit
   currentTxBitNum++;
@@ -742,7 +746,7 @@ void SDI12::writeChar(uint8_t outChar) {
   }
 
   // Hold the line for the rest of the start bit duration
-  while ((uint8_t)(TCNTX - t0) < txBitWidth) {}
+  while (TCNTX < txBitWidth + t0) { }
   t0 = TCNTX; // advance start time
 
   // repeat for all data bits until the last bit different from marking
@@ -754,6 +758,7 @@ void SDI12::writeChar(uint8_t outChar) {
     else{
       digitalWrite(_dataPin, HIGH);  // set the pin state to HIGH for 0's
     }
+
     // Hold the line for this bit duration
     while ((uint8_t)(TCNTX - t0) < txBitWidth) {}
     t0 = TCNTX; // advance start time
@@ -763,12 +768,9 @@ void SDI12::writeChar(uint8_t outChar) {
   // Set the line low for the all remaining 1's and the stop bit
   digitalWrite(_dataPin, LOW);
 
-  interrupts(); // Re-enable universal interrupts as soon as critical timing is past
-
   // Hold the line low until the end of the 10th bit
   uint8_t bitTimeRemaining = txBitWidth*(10-lastHighBit);
   while ((uint8_t)(TCNTX - t0) < bitTimeRemaining) {}
-
 }
 
 // The typical write functionality for a stream object
@@ -783,11 +785,11 @@ size_t SDI12::write(uint8_t byte) {
 
 //    6.3    - this function sends out the characters of the String cmd, one by one
 void SDI12::sendCommand(String &cmd) {
-  wakeSensors();             // set state to transmitting and send break/marking
-  for (int unsigned i = 0; i < cmd.length(); i++){
-    writeChar(cmd[i]);       // write each character
-  }
-  setState(LISTENING);       // listen for reply
+    wakeSensors();             // set state to transmitting and send break/marking
+    for (int unsigned i = 0; i < cmd.length(); i++){
+        writeChar(cmd[i]);       // write each character
+    }
+    setState(LISTENING);       // listen for reply
 }
 
 void SDI12::sendCommand(const char *cmd) {

@@ -45,9 +45,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define SDI12_h
 
 //  Import Required Libraries
+#include <Stream.h>          // Arduino Stream library
+
+#include <Arduino.h>
 #include <inttypes.h>           // integer types library
-#include <Arduino.h>            // Arduino core library
-#include <Stream.h>             // Arduino Stream library
+
 
 typedef const __FlashStringHelper *FlashString;
 
@@ -58,7 +60,7 @@ class SDI12 : public Stream
 {
 protected:
   // hides the version from the stream to allow custom timeout value
-  int peekNextDigit(LookaheadMode lookahead, bool detectDecimal);
+  int peekNextDigit(bool detectDecimal);
 
 private:
 
@@ -122,8 +124,8 @@ public:
   virtual size_t write(uint8_t byte);  // standard stream function
 
   // hide the Stream equivalents to allow custom value to be returned on timeout
-  long parseInt(LookaheadMode lookahead = SKIP_ALL, char ignore = NO_IGNORE_CHAR);
-  float parseFloat(LookaheadMode lookahead = SKIP_ALL, char ignore = NO_IGNORE_CHAR);
+  long parseInt(char ignore = NO_IGNORE_CHAR);
+  float parseFloat(char ignore = NO_IGNORE_CHAR);
 
   bool setActive();         // set this instance as the active SDI-12 instance
   bool isActive();          // check if this instance is active
