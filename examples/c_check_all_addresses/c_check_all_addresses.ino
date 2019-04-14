@@ -55,7 +55,7 @@
 */
 
 
-#include <SDI12.h>
+#include <SDI12_Teensy35.h>
 
 #define SERIAL_BAUD 57600  // The baud rate for the output serial port
 #define POWER_PIN 22       // The sensor power pin (or -1 if not switching power)

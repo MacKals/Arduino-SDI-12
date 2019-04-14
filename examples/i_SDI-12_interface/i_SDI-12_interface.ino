@@ -30,10 +30,10 @@
 
 #define HELPTEXT "OPTIONS:\n\rhelp   : Print this message\n\rmode s : SDI-12 command mode (uppercase and ! automatically corrected) [default]\n\rmode v : verbatim mode (text will be sent verbatim)\n\rfb on  : Enable feedback (characters visible while typing) [default]\n\rfb off : Disable feedback (characters not visible while typing; may be desired for developers)\n\r(else) : send command to SDI-12 bus"
 
-#include <SDI12.h>
+#include <SDI12_Teensy35.h>
 
 #define SERIAL_BAUD 57600  // The baud rate for the output serial port
-#define DATA_PIN 7         // The pin of the SDI-12 data bus
+#define DATA_PIN 2         // The pin of the SDI-12 data bus
 #define POWER_PIN 22       // The sensor power pin (or -1 if not switching power)
 #define SENSOR_ADDRESS 1
 

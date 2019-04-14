@@ -21,10 +21,10 @@ Contact: github@emnet.net or @rinnamon on twitter
 */
 
 
-#include <SDI12.h>
+#include <SDI12_Teensy35.h>
 
 #define SERIAL_BAUD 57600  // The baud rate for the output serial port
-#define DATA_PIN 7         // The pin of the SDI-12 data bus
+#define DATA_PIN 2         // The pin of the SDI-12 data bus
 #define POWER_PIN 22       // The sensor power pin (or -1 if not switching power)
 #define SENSOR_ADDRESS 1
 
