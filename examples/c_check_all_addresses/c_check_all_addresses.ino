@@ -58,7 +58,7 @@
 #include <SDI12_Teensy35.h>
 
 #define SERIAL_BAUD 57600  // The baud rate for the output serial port
-#define POWER_PIN 22       // The sensor power pin (or -1 if not switching power)
+#define DATA_PIN 33         // The pin of the SDI-12 data bus
 #define FirstPin 5      // change to lowest pin number on your board
 #define LastPin 24       // change to highest pin number on your board
 

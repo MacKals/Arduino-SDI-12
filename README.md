@@ -1,7 +1,7 @@
 Arduino-SDI-12-Teensy35
 ==============
 
-A modified version of [Arduino-SDI-12](https://github.com/EnviroDIY/Arduino-SDI-12) for the Teensy 3.5. 
+A modified version of [Arduino-SDI-12](https://github.com/EnviroDIY/Arduino-SDI-12) for the Teensy 3.5.
 
 Arduino library for SDI-12 communications to a wide variety of environmental sensors. This library provides a general software solution, without requiring any additional hardware, to implement the SDI-12 communication protocol between an Arduino-based data logger and SDI-12-enabled sensors.
 
@@ -33,7 +33,7 @@ For most AVR boards, this library will also conflict with the [tone](https://www
 
 This library is made for Teensy 3.5.
 
-Not all data pins are available for use with this Arduino-SDI-12 library. Pin availability depends on the micro-controller. All _RX_ pins should work to drive the data-line, including D1, D9, D31, D34 etc.
+Not all data pins are available for use with this Arduino-SDI-12 library. Pin availability depends on the micro-controller. All _TX_ pins should work to drive the data-line.
 
 
 ## License

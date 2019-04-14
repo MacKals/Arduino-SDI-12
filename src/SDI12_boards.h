@@ -16,7 +16,7 @@ public:
     void resetSDI12TimerPrescale(void);
 
 // Teensy 3.5
-#elif defined(__MK64FX512__)
+#if defined(__MK64FX512__)
 
     // Library is implemented to generate a 16MHz counter so that the timing
     // commands from the Arduino implementation of this library can be used.

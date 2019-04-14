@@ -8,7 +8,7 @@ sensors. This library provides a general software solution, without requiring
 SDI12Timer::SDI12Timer(){}
 
 // Teensy 3.5
-#elif defined(__MK64FX512__)
+#if defined(__MK64FX512__)
 
      static uint8_t preSDI12_FTM0_SC;
 
