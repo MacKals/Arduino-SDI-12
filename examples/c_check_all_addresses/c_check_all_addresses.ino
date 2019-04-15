@@ -59,6 +59,7 @@
 
 #define SERIAL_BAUD 57600  // The baud rate for the output serial port
 #define DATA_PIN 33         // The pin of the SDI-12 data bus
+#define POWER_PIN -1
 #define FirstPin 5      // change to lowest pin number on your board
 #define LastPin 24       // change to highest pin number on your board
 
