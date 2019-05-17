@@ -15,8 +15,8 @@ public:
     void configSDI12TimerPrescale(void);
     void resetSDI12TimerPrescale(void);
 
-// Teensy 3.5
-#if defined(__MK64FX512__)
+// Teensy 3.5 or Teensy 3.6
+#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
 
     // Library is implemented to generate a 16MHz counter so that the timing
     // commands from the Arduino implementation of this library can be used.
@@ -30,9 +30,7 @@ public:
 
     #define BITS_PER_TICK_Q10 79
     // 1/(13.0208 ticks/bit) * 2^10 = 78.6432
-    #define RX_WINDOW_FUDGE 0
-
-// Teensy 3.6 is spesified by defined(__MK66FX1M0__)
+    #define RX_WINDOW_FUDGE 2
 
 // Unknown board
 #else

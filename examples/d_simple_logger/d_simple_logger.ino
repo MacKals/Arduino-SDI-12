@@ -110,15 +110,21 @@ void printBufferToScreen(){
   mySDI12.read(); // consume address
   while(mySDI12.available()){
     char c = mySDI12.read();
-    if(c == '+'){
-      buffer += ',';
+    if(c == '+') {
+      if (buffer.length() != 0) {
+        buffer += ',';
+      }
     }
-    else if ((c != '\n') && (c != '\r')) {
+    else if (c == '-') {
+      buffer += ",-";
+    }
+    else if ((c != '\n') && (c != '\r') && (c != '\t')) {
       buffer += c;
     }
     delay(50);
   }
- Serial.print(buffer);
+
+  Serial.print(buffer);
 }
 
 // gets identification information from a sensor, and prints it to the serial port
@@ -154,25 +160,28 @@ void takeMeasurement(char i){
       delay(5);
     }
   }
+
   mySDI12.clearBuffer();
 
   // find out how long we have to wait (in seconds).
-  uint8_t wait = 0;
+  uint16_t wait = 0;
   wait = sdiResponse.substring(1,4).toInt();
 
   // Set up the number of results to expect
   // int numMeasurements =  sdiResponse.substring(4,5).toInt();
 
   unsigned long timerStart = millis();
-  while((millis() - timerStart) < (1000 * wait)){
+
+  while((millis() - timerStart) < (1000 * wait)) {
     if(mySDI12.available())  // sensor can interrupt us to let us know it is done early
     {
       mySDI12.clearBuffer();
       break;
     }
   }
+
   // Wait for anything else and clear it out
-  delay(30);
+  delay(300);
   mySDI12.clearBuffer();
 
   // in this example we will only take the 'DO' measurement

@@ -156,7 +156,7 @@ static uint16_t bitTimes( uint8_t dt )
   return round((dt + rxWindowWidth)*(BITS_PER_TICK_Q10)) >> 10;
 } // bitTimes
 
-#if defined(__MK64FX512__)
+#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
     static volatile uint32_t TCNTX = 0;
 
     void ftm0_isr(void) {
